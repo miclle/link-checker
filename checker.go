@@ -1,7 +1,6 @@
 package checker
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -9,13 +8,22 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+// Link element struct
+type Link struct {
+	Href       string
+	Text       string
+	Referer    string
+	Status     string
+	StatusCode int
+}
+
 // Checker struct
 type Checker struct {
 	*http.Client
 	TargetURL string
 	host      string
 	Depth     int
-	Queue     map[string][]string
+	Queue     map[string][]*Link
 }
 
 // NewChecker return Checker
@@ -30,6 +38,7 @@ func NewChecker(targetURL string, depth int) (*Checker, error) {
 		TargetURL: targetURL,
 		host:      u.Host,
 		Depth:     depth,
+		Queue:     map[string][]*Link{},
 	}, nil
 }
 
@@ -59,7 +68,16 @@ func (c *Checker) walk(url string) (err error) {
 
 		// Find the a elements
 		doc.Find("a").Each(func(i int, a *goquery.Selection) {
-			fmt.Printf("%s \t: %s\n", a.Text(), a.AttrOr("href", ""))
+			if href, exists := a.Attr("href"); exists {
+
+				link := &Link{
+					Href:    href,
+					Text:    a.Text(),
+					Referer: url,
+				}
+
+				c.Queue[link.Href] = append(c.Queue[link.Href], link)
+			}
 		})
 	}
 	return
