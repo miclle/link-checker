@@ -11,7 +11,7 @@ import (
 func TestChecker(t *testing.T) {
 	assert := assert.New(t)
 
-	err := Checker("http://developer.qiniu.com", 1)
+	err := Check("http://developer.qiniu.com", 1)
 
 	if err != nil {
 		log.Fatal("err:", err.Error())
