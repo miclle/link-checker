@@ -1,6 +1,10 @@
 # link-checker
 Link Checker
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/miclle/link-checker)](https://goreportcard.com/report/github.com/miclle/link-checker)
-[![](https://godoc.org/github.com/miclle/link-checker?status.svg)](http://godoc.org/github.com/miclle/link-checker)
+<a href="https://goreportcard.com/report/github.com/miclle/link-checker" target="_blank">
+  <img src="https://goreportcard.com/badge/github.com/miclle/link-checker" alt="Go Report Card">
+</a>
 
+<a href="http://godoc.org/github.com/miclle/link-checker" target="_blank">
+  <img src="https://godoc.org/github.com/miclle/link-checker?status.svg" alt="GoDoc Reference">
+</a>
