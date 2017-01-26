@@ -1,5 +1,4 @@
-# link-checker
-Link Checker
+# Link Checker
 
 <a target="_blank" href="https://travis-ci.org/miclle/link-checker"><img src="https://travis-ci.org/miclle/link-checker.svg?branch=master"></a>
 <a target="_blank" href="https://codecov.io/gh/miclle/link-checker"><img src="https://codecov.io/gh/miclle/link-checker/branch/master/graph/badge.svg" alt="Codecov" /></a>
