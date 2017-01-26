@@ -23,7 +23,7 @@ type Checker struct {
 	TargetURL string
 	host      string
 	Depth     int
-	Queue     map[string][]*Link
+	queue     map[string][]*Link
 }
 
 // NewChecker return Checker
@@ -38,7 +38,7 @@ func NewChecker(targetURL string, depth int) (*Checker, error) {
 		TargetURL: targetURL,
 		host:      u.Host,
 		Depth:     depth,
-		Queue:     map[string][]*Link{},
+		queue:     map[string][]*Link{},
 	}, nil
 }
 
@@ -76,7 +76,7 @@ func (c *Checker) walk(url string) (err error) {
 					Referer: url,
 				}
 
-				c.Queue[link.Href] = append(c.Queue[link.Href], link)
+				c.queue[link.Href] = append(c.queue[link.Href], link)
 			}
 		})
 	}
