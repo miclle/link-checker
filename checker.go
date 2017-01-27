@@ -12,9 +12,20 @@ import (
 type Link struct {
 	Href       string
 	Text       string
-	Referer    string
+	Referers   LinkDictionary
 	Status     string
 	StatusCode int
+}
+
+// LinkDictionary linkddictionary
+type LinkDictionary map[string]*Link
+
+// AddReferer add referer to link
+func (l *Link) AddReferer(link *Link) {
+	if l.Referers == nil {
+		l.Referers = LinkDictionary{}
+	}
+	l.Referers[link.Href] = link
 }
 
 // Checker struct
@@ -23,7 +34,7 @@ type Checker struct {
 	TargetURL string
 	host      string
 	Depth     int
-	queue     map[string][]*Link
+	queue     LinkDictionary
 }
 
 // NewChecker return Checker
@@ -38,19 +49,23 @@ func NewChecker(targetURL string, depth int) (*Checker, error) {
 		TargetURL: targetURL,
 		host:      u.Host,
 		Depth:     depth,
-		queue:     map[string][]*Link{},
+		queue:     LinkDictionary{},
 	}, nil
 }
 
 // Checking the url
 func (c *Checker) Checking() (err error) {
-	return c.walk(c.TargetURL)
+	link := &Link{
+		Href: c.TargetURL,
+	}
+
+	return c.walk(link)
 }
 
 // walk the url
-func (c *Checker) walk(url string) (err error) {
+func (c *Checker) walk(link *Link) (err error) {
 
-	resp, err := c.Get(url)
+	resp, err := c.Get(link.Href)
 	if err != nil {
 		return
 	}
@@ -70,13 +85,12 @@ func (c *Checker) walk(url string) (err error) {
 		doc.Find("a").Each(func(i int, a *goquery.Selection) {
 			if href, exists := a.Attr("href"); exists {
 
-				link := &Link{
-					Href:    href,
-					Text:    a.Text(),
-					Referer: url,
+				internalLink := &Link{
+					Href: href,
+					Text: a.Text(),
 				}
 
-				c.queue[link.Href] = append(c.queue[link.Href], link)
+				internalLink.AddReferer(link)
 			}
 		})
 	}
