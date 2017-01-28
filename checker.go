@@ -12,6 +12,7 @@ import (
 // Link element struct
 type Link struct {
 	Href       string
+	URL        *url.URL
 	Text       string
 	Referers   LinkDictionary
 	Status     string
@@ -34,13 +35,13 @@ func (l *Link) AddReferer(link *Link) {
 type Checker struct {
 	*http.Client
 	TargetURL string
-	host      string
+	base      *url.URL
 	Depth     int
 	queue     LinkDictionary
 }
 
 // NewChecker return Checker
-func NewChecker(targetURL string, depth int) (*Checker, error) {
+func NewChecker(targetURL string, depth int) (checker *Checker, err error) {
 	u, err := url.Parse(targetURL)
 	if err != nil {
 		return nil, err
@@ -49,7 +50,7 @@ func NewChecker(targetURL string, depth int) (*Checker, error) {
 	return &Checker{
 		Client:    http.DefaultClient,
 		TargetURL: targetURL,
-		host:      u.Host,
+		base:      u,
 		Depth:     depth,
 		queue:     LinkDictionary{},
 	}, nil
@@ -66,10 +67,16 @@ func (c *Checker) Checking() (err error) {
 
 // walk the url
 func (c *Checker) walk(link *Link) (err error) {
-	log.Println("walk link:", link.Href)
-
-	resp, err := c.Get(link.Href)
+	u, err := url.Parse(link.Href)
 	if err != nil {
+		return err
+	}
+
+	link.URL = c.base.ResolveReference(u)
+
+	resp, err := c.Get(link.URL.String())
+	if err != nil {
+		log.Println("http get error", link.Href, err.Error())
 		return
 	}
 
@@ -85,7 +92,7 @@ func (c *Checker) walk(link *Link) (err error) {
 
 	log.Printf("link: %#v", link)
 
-	if c.host == resp.Request.Host {
+	if c.base.Host == resp.Request.Host {
 		// Find the a elements
 		doc.Find("a").Each(func(i int, a *goquery.Selection) {
 			if href, exists := a.Attr("href"); exists {
@@ -96,7 +103,6 @@ func (c *Checker) walk(link *Link) (err error) {
 				internalLink.AddReferer(link)
 
 				if _, e := c.queue[internalLink.Href]; e == false {
-					log.Println("walk internal link", internalLink.Href)
 					c.queue[internalLink.Href] = internalLink
 					c.walk(internalLink)
 				}
