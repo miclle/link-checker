@@ -1,9 +1,10 @@
 package checker
 
 import (
-	"log"
 	"net/http"
 	"net/url"
+
+	"log"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -15,6 +16,7 @@ type Link struct {
 	Referers   LinkDictionary
 	Status     string
 	StatusCode int
+	PageTitle  string
 }
 
 // LinkDictionary linkddictionary
@@ -64,33 +66,40 @@ func (c *Checker) Checking() (err error) {
 
 // walk the url
 func (c *Checker) walk(link *Link) (err error) {
+	log.Println("walk link:", link.Href)
 
 	resp, err := c.Get(link.Href)
 	if err != nil {
 		return
 	}
 
-	log.Println("resp.Status:", resp.StatusCode, resp.Status)
+	link.Status = resp.Status
+	link.StatusCode = resp.StatusCode
 
 	doc, err := goquery.NewDocumentFromResponse(resp)
 	if err != nil {
 		return err
 	}
 
-	log.Println("title:", doc.Find("title").Text())
+	link.PageTitle = doc.Find("title").Text()
+
+	log.Printf("link: %#v", link)
 
 	if c.host == resp.Request.Host {
-
 		// Find the a elements
 		doc.Find("a").Each(func(i int, a *goquery.Selection) {
 			if href, exists := a.Attr("href"); exists {
-
 				internalLink := &Link{
 					Href: href,
 					Text: a.Text(),
 				}
-
 				internalLink.AddReferer(link)
+
+				if _, e := c.queue[internalLink.Href]; e == false {
+					log.Println("walk internal link", internalLink.Href)
+					c.queue[internalLink.Href] = internalLink
+					c.walk(internalLink)
+				}
 			}
 		})
 	}
