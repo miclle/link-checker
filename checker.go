@@ -74,10 +74,22 @@ func (c *Checker) walk(link *Link) (err error) {
 
 	link.URL = c.base.ResolveReference(u)
 
+	if c.base.Host != link.URL.Host {
+		resp, err := c.Head(link.URL.String())
+		if err != nil {
+			log.Println("http get error", link.Href, err.Error())
+			return err
+		}
+
+		link.Status = resp.Status
+		link.StatusCode = resp.StatusCode
+		return nil
+	}
+
 	resp, err := c.Get(link.URL.String())
 	if err != nil {
 		log.Println("http get error", link.Href, err.Error())
-		return
+		return err
 	}
 
 	link.Status = resp.Status
@@ -92,23 +104,22 @@ func (c *Checker) walk(link *Link) (err error) {
 
 	log.Printf("link: %#v", link)
 
-	if c.base.Host == resp.Request.Host {
-		// Find the a elements
-		doc.Find("a").Each(func(i int, a *goquery.Selection) {
-			if href, exists := a.Attr("href"); exists {
-				internalLink := &Link{
-					Href: href,
-					Text: a.Text(),
-				}
-				internalLink.AddReferer(link)
-
-				if _, e := c.queue[internalLink.Href]; e == false {
-					c.queue[internalLink.Href] = internalLink
-					c.walk(internalLink)
-				}
+	// Find the a elements
+	doc.Find("a").Each(func(i int, a *goquery.Selection) {
+		if href, exists := a.Attr("href"); exists {
+			internalLink := &Link{
+				Href: href,
+				Text: a.Text(),
 			}
-		})
-	}
+			internalLink.AddReferer(link)
+
+			if _, e := c.queue[internalLink.Href]; e == false {
+				c.queue[internalLink.Href] = internalLink
+				c.walk(internalLink)
+			}
+		}
+	})
+
 	return
 }
 
